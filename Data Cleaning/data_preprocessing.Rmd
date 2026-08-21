@@ -47,6 +47,7 @@ Add new variables related to each transaction
 clean_hotel_df <- clean_hotel_df |>
   mutate(total_nights = stays_in_weekend_nights + stays_in_week_nights,
          revenue = adr*total_nights, 
+         total_adr = adr*total_nights,
          booking_time_flag = case_when( 
                           lead_time <= 7 ~ "0-7", 
                         lead_time >7 & lead_time <=30 ~ "8-30",
