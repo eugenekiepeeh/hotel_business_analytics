@@ -2,8 +2,10 @@
 title: "Exploratory Data Analysis"
 author: "Eugene Kiepeeh"
 date: "2026-08-21"
-output: html_document
-editor_options: 
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
   chunk_output_type: console
 ---
 
