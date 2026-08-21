@@ -3,6 +3,8 @@ title: "Analyzing Average Daily Rate"
 author: "Eugene Kiepeeh"
 date: "2026-08-21"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -11,5 +13,97 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 final_hotel_bookings <- read_csv("~/Documents/00 Working Projects/Hotel Data Analytics/Hotel Analytics/Data/Processed_Data/final_hotel_bookings.csv")
+```
+
+Summary Statistics
+
+```{r}
+summary(final_hotel_bookings$revenue)
+```
+
+
+```{r}
+p1 <- final_hotel_bookings |>
+  filter(adr < 400) |>
+  ggplot(aes(x = adr)) +
+           geom_histogram(fill = "darkgreen", color = "White", bins = 30) +
+           geom_vline(xintercept = mean(final_hotel_bookings$adr), 
+                      color = "red") +
+  scale_y_continuous(expand = expansion(mult = c(0.0,0.08))) +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        title = element_text(face = "bold")) +
+  labs(title = "Distribution of Average Daily Rate",
+       x = "Average Daily Rate($)",
+       y = "Number of Visits")
+ 
+p2 <- final_hotel_bookings |>
+  filter(revenue <2000) |>
+  ggplot(aes(x = revenue)) +
+           geom_histogram(fill = "darkgreen", color = "White", bins = 30) +
+           geom_vline(xintercept = mean(final_hotel_bookings$revenue), color = "red") +
+  scale_y_continuous(expand = expansion(mult = c(0.0,0.08))) +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        title = element_text(face = "bold")) +
+  labs(title = "Distribution of Revenue",
+       x = "Revenue Per Booking($)",
+       y = "Number of Visits")
+
+p1 + p2 + plot_layout(nrow = 2)
+```
+
+```{r Revenue Distribution}
+final_hotel_bookings |>
+  filter(revenue <2000) |>
+  ggplot(aes(x = revenue)) +
+  geom_histogram(bins = 30, fill = "darkgreen", color = "white") +
+  scale_x_continuous(labels = dollar_format(), expand = expansion(mult = c(0.0,0.05))) +
+  theme_business() +
+  #theme(panel.grid.minor = element_blank(), title = element_text(face = "bold")) +
+  labs(title = "Expected Revenue Distribution Per Booking (July 2015 - Aug 2017)", 
+       x = "Revenue (USD)",
+       y = "Number of Bookings")
+```
+
+```{r}
+summary_data <- final_hotel_bookings |>
+  group_by(is_canceled) |>
+  summarise(num = n(),
+    totalRevenue = sum(revenue, na.rm = T),
+            AvgADR = mean(adr, na.rm = T)) |>
+  mutate(is_canceled = fct_relevel(as.factor(is_canceled), "1","0"),
+         is_canceled = fct_recode(is_canceled, "Canceled" = "1", "Completed Stay" = "0")) |>
+  mutate(share = totalRevenue / sum(totalRevenue))
+
+summary_data |>
+  ggplot(aes(x = is_canceled, y = totalRevenue/1e6, fill = is_canceled)) +
+  geom_col(width = 0.65, show.legend = FALSE) +
+  geom_text(aes(label = paste0("$", round(totalRevenue/1e6,1), "M")),
+            vjust = -0.5,
+            fontface = "bold",
+            size = 5) +
+  geom_text(data = summary_data |> filter(is_canceled == "Canceled"),
+          aes(label = paste0(percent(share), " of total revenue")),
+          vjust = 2,
+          color = "white",
+          fontface = "bold") +
+  scale_fill_manual(values = c(
+    "Canceled" = "#D7263D",
+    "Completed Stay" = "#1B998B")) +
+  scale_y_continuous(labels = dollar_format(suffix = "M"), 
+                     expand =  expansion(mult = c(0.0,0.12))) +
+  labs(
+    title = "Revenue Exposure from Booking Cancellations",
+    subtitle = "Comparison of Total Expected Revenue: Completed vs. Canceled Bookings",
+    x = NULL,
+    y = "Total Revenue (USD, Millions)",
+    caption = "Source: Hotel Booking Analytics Project") +
+    theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18),
+    plot.subtitle = element_text(size = 13),
+    axis.text.x = element_text(face = "bold"),
+    panel.grid.minor = element_blank())
 ```
 
