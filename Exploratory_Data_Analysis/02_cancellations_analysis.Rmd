@@ -1,0 +1,38 @@
+---
+title: "Analyzing Canceled Bookings"
+author: "Eugene Kiepeeh"
+date: "2026-08-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+final_hotel_bookings <- read_csv("~/Documents/00 Working Projects/Hotel Data Analytics/Hotel Analytics/Data/Processed_Data/final_hotel_bookings.csv")
+```
+
+-----------------
+--- Summary Analytics ---
+
+```{r}
+sum_cancel <- sum(final_hotel_bookings$is_canceled == 1)
+
+final_hotel_bookings |>
+  filter(is_canceled == 1) |>
+  group_by(booking_time_flag) |>
+  summarize(numCancels = n(), cancelRate = numCancels/sum_cancel, 
+            .groups = "drop",
+            mean_ADR = mean(adr, na.rm = T),
+            expected_rev = sum(revenue, na.rm = T))
+```
+- Does room assignment reduce cancellations
+```{r}
+final_hotel_bookings |>
+  filter(is_canceled == 1) |>
+  group_by(room_match_flag) |>
+  summarise(numCancels = n(), cancelRate = numCancels/24041)
+```
+- In fact, the room assignment does not affect a client likelihood of cancelling their booking. 

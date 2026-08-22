@@ -1,0 +1,388 @@
+---
+title: 'Customer Segmentation: Revenue and Cancellation Analysis'
+author: "Eugene Kiepeeh"
+date: "2026-08-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+market_segment_df <- final_hotel_bookings |>
+  group_by(market_segment) |>
+  summarize(num = n(),
+            revenue = sum(revenue, na.rm = T),
+            loss = sum(expected_loss, na.rm = T), 
+            Gain = (revenue-loss), .groups = "drop") |>
+  mutate(pct_bookings = num/sum(num),
+         loss_rate = loss/revenue) |>
+  filter(market_segment != "Undefined") |>
+  pivot_longer(cols = c(loss:Gain), names_to = "Revenue Type",
+              values_to = "Value") |>
+  mutate(`Revenue Type` = fct_relevel(`Revenue Type`, "loss", "Gain"),
+         `Revenue Type` = fct_recode(`Revenue Type`, Loss = "loss"))
+
+head(market_segment_df)
+```
+
+```{r Revenue Gain VS Lost by Segment}
+market_segment_df |>
+  ggplot(aes(x = reorder(market_segment, num/2),
+             y = Value/1e6,
+             fill = `Revenue Type`)) +
+  geom_col(position = "dodge", width = 0.7) +
+  coord_flip() +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  scale_fill_manual(values = c(
+    "Loss" = "#D7263D",
+    "Gain" = "#1B998B")) +
+  labs(title = "Revenue Generated vs Revenue Retained by Market Segment",
+    subtitle = "Online Travel Agency generates highest revenue but also highest loss",
+    x = NULL, y = "Revenue (Millions USD)",
+    fill = NULL,
+    caption = "Gain = Revenue retained after cancellations") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"),
+    axis.text = element_text(face = "bold"),
+    plot.title.position = "plot")
+
+```
+
+
+```{r Revenue Lost by Market Segment}
+market_segment_df |>
+  ggplot(aes(x = reorder(market_segment, loss_rate/2),
+             y = loss_rate/2)) +
+  geom_col(fill = "#D7263D", width = 0.7) +
+  coord_flip() +
+  geom_text(aes(label = scales::percent(loss_rate, accuracy = 0.1)),
+            hjust = 0.3, size = 4, color = "white", fontface = "bold") +
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = expansion(mult = c(0, 0.1))) +
+  labs(
+    title = "Revenue Loss Rate by Market Segment",
+    subtitle = "Online TA and Groups segments show highest revenue exposure",
+    x = NULL,
+    y = "Revenue Lost (%)",
+    caption = "Loss Rate = Canceled Revenue / Total Revenue") +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.text.y = element_text(face = "bold"))
+
+```
+
+
+```{r}
+final_hotel_bookings |>
+  group_by(market_segment) |>
+  summarize(num = n(),
+            revenue = sum(revenue, na.rm = T),
+            loss = sum(expected_loss, na.rm = T), 
+            Gain = (revenue-loss), .groups = "drop") |>
+    mutate(pct_bookings = num/sum(num),
+         loss_rate = loss/revenue) |>
+  filter(market_segment != "Undefined") |>
+  ggplot(aes(x = revenue/1e6,
+             y = loss_rate,
+             size = num,
+             color = loss_rate,
+             label = market_segment)) +
+  geom_point(alpha = 1) +
+  geom_text(vjust = -1.2, size = 3.5) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_continuous(labels = scales::dollar_format(suffix = "M")) +
+  scale_color_gradient(low = "#2E86C1", high = "#C0392B") +
+  scale_size_continuous(range = c(4, 14)) +
+  labs(
+    title = "Revenue vs Revenue Risk by Market Segment",
+    subtitle = "Bubble size represents booking volume",
+    x = "Total Revenue (Millions USD)",
+    y = "Revenue Loss Rate",
+    size = "Total Bookings",
+    color = "Loss Rate") +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right")
+```
+-------
+### Deposit 
+
+```{r}
+deposit_segment <- final_hotel_bookings |>
+  group_by(deposit_type) |>
+  summarise(nBookings = n(),
+            nCancels = mean(as.numeric(is_canceled)),
+            revenue = sum(revenue, na.rm = T),
+            loss = sum(expected_loss, na.rm = T),
+            loss_rate = loss/revenue,
+            Gain = revenue - loss,
+            .groups = "drop")
+
+deposit_segment_df <- final_hotel_bookings |>
+  group_by(market_segment, deposit_type) |>
+  summarize(
+    revenue = sum(revenue, na.rm = TRUE),
+    loss = sum(expected_loss, na.rm = TRUE),
+    loss_rate = loss / revenue,
+    .groups = "drop") |>
+  filter(market_segment != "Undefined")
+```
+
+```{r}
+deposit_segment_df |>
+  ggplot(aes(x = deposit_type,
+             y = reorder(market_segment, loss_rate),
+             fill = loss_rate)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "#EBF5FB", high = "#C0392B",
+                      labels = scales::percent_format()) + 
+  labs(
+    title = "Revenue Loss Rate by Market Segment and Deposit Type",
+    subtitle = "No deposits significantly reduce revenue leakage",
+    x = "Deposit Type",
+    y = "Market Segment",
+    fill = "Loss Rate"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.text.y = element_text(face = "bold"),
+    plot.title.position = "plot")
+```
+
+```{r}
+customer_segment_df <- final_hotel_bookings |>
+  group_by(customer_type) |>
+  summarise(tBookings = n(),
+            cancel_rate = mean(as.numeric(is_canceled)),
+            cBookings = tBookings*cancel_rate,
+            tRevenue = sum(revenue),
+            revPerBooking = tRevenue/tBookings,
+            tLoss = sum(expected_loss),
+            lossPerBook = tLoss/cBookings,
+            Gain = tRevenue - tLoss, .groups = "drop") |>
+  mutate(pctTBookings =tBookings/sum(tBookings),
+         revenue_share = tRevenue/sum(tRevenue),
+         loss_share = tLoss/sum(tLoss),
+         gain_share = Gain/(sum(Gain)))
+```
+
+```{r}
+library(tidytext)
+final_hotel_bookings |>
+  count(customer_type, market_segment, is_canceled, sort = TRUE) |>
+  filter(market_segment != "Undefined") |>
+  ggplot(aes(x = reorder_within(market_segment,n, customer_type), y = n, 
+             fill = as.factor(is_canceled))) +
+  geom_col(position = "fill") +
+  coord_flip() +
+  scale_x_reordered() +
+  facet_wrap(~customer_type, scale = "free") +
+  labs(title = "How are customers booking with us",
+       fill = NULL, x = NULL, y = "Prop. of Bookings") +
+  scale_fill_brewer(palette = 7, type = "qual") +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank(), 
+        panel.grid.major.x = element_blank())
+```
+
+
+```{r}
+customer_segment_df |>
+  ggplot(aes(x = pctTBookings, y = cancel_rate)) +
+  geom_smooth(method = "lm", se = FALSE, color = "#191414") +
+  geom_label(aes(label = customer_type), fill = "#1DB954", color = "white") +
+  scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0.1,0.08))) +
+  scale_x_continuous(labels = scales::percent, expand = expansion(mult = c(0.1,0.1))) +
+  labs(title = "Customer Segmentation: Bookings and Cancellation Rate",
+       x = "Total Bookings (%)",
+       y = "Cancellation Rate (%)") +
+  theme_minimal(base_family = "Helvetica") +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12, color = "#666666"),
+    axis.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank())
+```
+
+```{r}
+customer_segment_long <- customer_segment_df |>
+  pivot_longer(c(loss_share,gain_share), names_to = "Revenue_share2", values_to = "Value_share") |>
+  mutate(Revenue_share2 = fct_relevel(Revenue_share2, "loss_share", "gain_share"),
+         Revenue_share2 = fct_recode(Revenue_share2, "Revenue Loss" ="loss_share", "Revenue Gain" = "gain_share"),
+         customer_type = fct_reorder(customer_type, tBookings, mean)) 
+
+tf_data <- customer_segment_df |>
+  select(customer_type, tLoss, Gain) |>
+  pivot_longer(c(tLoss, Gain), names_to = "Revenue1", values_to = "Revenue1_Value")
+
+combined_df <- bind_cols(customer_segment_long, tf_data) |>
+  select(-`customer_type...14`) |>
+  rename(customer_type = customer_type...1)
+```
+
+```{r}
+combined_df |>
+  ggplot(aes(x = customer_type, y = Value_share, fill = Revenue_share2)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.65) +
+geom_text(aes(label = paste0("$", round(Revenue1_Value/1e6,1), "M")), position = position_dodge(width = 0.7),
+            vjust = -0.5,
+            fontface = "bold",
+            size = 4) +
+  scale_fill_manual(values = c(
+    "Revenue Gain" = "#1B998B",
+    "Revenue Loss" = "#D7263D")) +
+  scale_y_continuous(labels = percent_format(), expand = expansion(mult = c(0,0.12))) +
+  labs(
+    title = "Revenue Gain and Loss by Customer Type",
+    subtitle = "Comparing contribution of gains vs losses across customer segments",
+    x = "Customer Segment",
+    y = "Relative Shares",
+    fill = NULL,
+    caption = "Revenue Gain = bookings without cancellation; Revenue Loss = revenue lost due to cancellations") +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank()) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18),
+    plot.subtitle = element_text(size = 13),
+    axis.text.x = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank())
+```
+
+```{r}
+segment_df <- clean_hotel_df |>
+  count(customer_type, market_segment, is_canceled) |>
+  pivot_wider(names_from = is_canceled, values_from = n, values_fill = 0) |>
+  mutate(cancel_rate = `1`/ (`0`+`1`)) |>
+  filter(market_segment != "Undefined")
+
+
+ggplot(segment_df,
+       aes(x = reorder(market_segment, cancel_rate),
+           y = cancel_rate,
+           fill = customer_type)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Cancellation Rate by Market Segment and Customer Type",
+    subtitle = "Online travel agents show elevated cancellation behavior",
+    x = "Market Segment",
+    y = "Cancellation Rate",
+    fill = "Customer Type"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+heat_df <- final_hotel_bookings |>
+  group_by(customer_type, market_segment) |>
+  summarise(
+    cancel_rate = mean(as.numeric(is_canceled))-1,
+    .groups = "drop"
+  ) |>
+  filter(market_segment != "Undefined")
+
+ggplot(heat_df,
+       aes(x = market_segment,
+           y = customer_type,
+           fill = cancel_rate)) +
+  geom_tile(color = "white") +
+
+  scale_fill_gradient2(
+    low = "#1B998B",
+    mid = "steelblue",
+    high = "#D7263D",
+    midpoint = mean(heat_df$cancel_rate),
+    labels = scales::percent_format()
+  ) +
+
+  labs(
+    title = "Cancellation Risk Heatmap",
+    subtitle = "High-risk combinations of Customer Type and Market Segment",
+    x = "Market Segment",
+    y = "Customer Type",
+    fill = "Cancel Rate"
+  ) +
+
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(scales)
+
+# Prepare data
+plot_df <- clean_hotel_df |>
+  mutate(
+    is_canceled = fct_recode(is_canceled,
+                             "Canceled" = "1",
+                             "Completed Stay" = "0"),
+    arrival_date_month = fct_relevel(
+      arrival_date_month,
+      "January","February","March","April","May","June",
+      "July","August","September","October","November","December")) |>
+  group_by(is_canceled, arrival_date_month) |>
+  summarise(totalRevenue = sum(revenue), .groups = "drop")
+
+# Identify peak month per category
+peak_df <- plot_df |>
+  group_by(is_canceled) |>
+  slice_max(totalRevenue, n = 1)
+
+# Plot
+ggplot(plot_df,
+       aes(x = arrival_date_month,
+           y = totalRevenue,
+           color = is_canceled,
+           group = is_canceled)) +
+
+  # Highlight peak months
+  #geom_point(data = peak_df, size = 4) +
+
+  # Main lines
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+
+  # Label peak values
+  geom_text(data = peak_df,
+            aes(label = dollar(totalRevenue)),
+            vjust = -1,
+            fontface = "bold",
+            show.legend = FALSE) +
+
+  scale_y_continuous(labels = dollar_format(), expand = expansion(mult = c(0.01,0.21))) +
+  scale_color_manual(values = c(
+    "Canceled" = "#D7263D",
+    "Completed Stay" = "#1B998B"
+  )) +
+
+  labs(
+    title = "Monthly Revenue Trends",
+    subtitle = "Comparison of Completed Stays vs. Cancellations",
+    x = "Arrival Month",
+    y = "Total Revenue",
+    color = "Booking Status",
+    caption = "Revenue totals shown in USD"
+  ) +
+
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top",
+    panel.grid.minor = element_blank()
+  )
+
+```
