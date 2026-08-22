@@ -1,29 +1,24 @@
----
-title: 'Customer Segmentation: Revenue and Cancellation Analysis'
-author: "Eugene Kiepeeh"
-date: "2026-08-22"
-output: github_document
-editor_options: 
-  chunk_output_type: console
----
+Customer Segmentation: Revenue and Cancellation Analysis
+================
+Eugene Kiepeeh
+2026-08-22
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
-library(dplyr)
-library(ggplot2)
-library(ggridges)
-library(scales)
-library(patchwork)
-library(forcats)
-```
-
-```{r}
+``` r
 final_hotel_bookings <- read_csv("~/Documents/00 Working Projects/Hotel Data Analytics/Hotel Analytics/Data/Processed_Data/final_hotel_bookings.csv")
 ```
 
+    ## Rows: 87396 Columns: 37
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr  (14): hotel, arrival_date_month, meal, country, market_segment, distrib...
+    ## dbl  (20): is_canceled, lead_time, arrival_date_year, arrival_date_week_numb...
+    ## lgl   (1): booking_changes_flag
+    ## date  (2): arrival_date, reservation_status_date
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
-```{r}
+``` r
 market_segment_df <- final_hotel_bookings |>
   group_by(market_segment) |>
   summarize(num = n(),
@@ -41,7 +36,17 @@ market_segment_df <- final_hotel_bookings |>
 head(market_segment_df)
 ```
 
-```{r Revenue Gain VS Lost by Segment}
+    ## # A tibble: 6 × 7
+    ##   market_segment   num revenue pct_bookings loss_rate `Revenue Type`   Value
+    ##   <chr>          <int>   <dbl>        <dbl>     <dbl> <fct>            <dbl>
+    ## 1 Aviation         227  83033.      0.00260    0.169  Loss            14065 
+    ## 2 Aviation         227  83033.      0.00260    0.169  Gain            68968.
+    ## 3 Complementary    702   5075.      0.00803    0.0532 Loss              270.
+    ## 4 Complementary    702   5075.      0.00803    0.0532 Gain             4805.
+    ## 5 Corporate       4212 594164.      0.0482     0.186  Loss           110415.
+    ## 6 Corporate       4212 594164.      0.0482     0.186  Gain           483749.
+
+``` r
 market_segment_df |>
   ggplot(aes(x = reorder(market_segment, num/2),
              y = Value/1e6,
@@ -61,11 +66,11 @@ market_segment_df |>
   theme(plot.title = element_text(face = "bold"),
     axis.text = element_text(face = "bold"),
     plot.title.position = "plot")
-
 ```
 
+![](03_customer_segmentation_files/figure-gfm/Revenue%20Gain%20VS%20Lost%20by%20Segment-1.png)<!-- -->
 
-```{r Revenue Lost by Market Segment}
+``` r
 market_segment_df |>
   ggplot(aes(x = reorder(market_segment, loss_rate/2),
              y = loss_rate/2)) +
@@ -85,11 +90,11 @@ market_segment_df |>
   theme(
     plot.title = element_text(face = "bold"),
     axis.text.y = element_text(face = "bold"))
-
 ```
 
+![](03_customer_segmentation_files/figure-gfm/Revenue%20Lost%20by%20Market%20Segment-1.png)<!-- -->
 
-```{r}
+``` r
 final_hotel_bookings |>
   group_by(market_segment) |>
   summarize(num = n(),
@@ -122,10 +127,12 @@ final_hotel_bookings |>
     plot.title = element_text(face = "bold"),
     legend.position = "right")
 ```
--------
-### Deposit 
 
-```{r}
+## ![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+### Deposit
+
+``` r
 deposit_segment <- final_hotel_bookings |>
   group_by(deposit_type) |>
   summarise(nBookings = n(),
@@ -146,7 +153,7 @@ deposit_segment_df <- final_hotel_bookings |>
   filter(market_segment != "Undefined")
 ```
 
-```{r}
+``` r
 deposit_segment_df |>
   ggplot(aes(x = deposit_type,
              y = reorder(market_segment, loss_rate),
@@ -168,7 +175,9 @@ deposit_segment_df |>
     plot.title.position = "plot")
 ```
 
-```{r}
+![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
 customer_segment_df <- final_hotel_bookings |>
   group_by(customer_type) |>
   summarise(tBookings = n(),
@@ -185,7 +194,7 @@ customer_segment_df <- final_hotel_bookings |>
          gain_share = Gain/(sum(Gain)))
 ```
 
-```{r}
+``` r
 library(tidytext)
 final_hotel_bookings |>
   count(customer_type, market_segment, is_canceled, sort = TRUE) |>
@@ -204,8 +213,9 @@ final_hotel_bookings |>
         panel.grid.major.x = element_blank())
 ```
 
+![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-```{r}
+``` r
 customer_segment_df |>
   ggplot(aes(x = pctTBookings, y = cancel_rate)) +
   geom_smooth(method = "lm", se = FALSE, color = "#191414") +
@@ -223,7 +233,11 @@ customer_segment_df |>
     panel.grid.minor = element_blank())
 ```
 
-```{r}
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
 customer_segment_long <- customer_segment_df |>
   pivot_longer(c(loss_share,gain_share), names_to = "Revenue_share2", values_to = "Value_share") |>
   mutate(Revenue_share2 = fct_relevel(Revenue_share2, "loss_share", "gain_share"),
@@ -239,7 +253,11 @@ combined_df <- bind_cols(customer_segment_long, tf_data) |>
   rename(customer_type = customer_type...1)
 ```
 
-```{r}
+    ## New names:
+    ## • `customer_type` -> `customer_type...1`
+    ## • `customer_type` -> `customer_type...14`
+
+``` r
 combined_df |>
   ggplot(aes(x = customer_type, y = Value_share, fill = Revenue_share2)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.65) +
@@ -269,7 +287,9 @@ geom_text(aes(label = paste0("$", round(Revenue1_Value/1e6,1), "M")), position =
     panel.grid.major.x = element_blank())
 ```
 
-```{r}
+![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
 segment_df <- final_hotel_bookings |>
   count(customer_type, market_segment, is_canceled) |>
   pivot_wider(names_from = is_canceled, values_from = n, values_fill = 0) |>
@@ -294,7 +314,9 @@ ggplot(segment_df,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r}
+![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
 heat_df <- final_hotel_bookings |>
   group_by(customer_type, market_segment) |>
   summarise(
@@ -329,7 +351,9 @@ ggplot(heat_df,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r}
+![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
 # Prepare data
 plot_df <- final_hotel_bookings |>
   mutate(
@@ -393,5 +417,6 @@ ggplot(plot_df,
     legend.position = "top",
     panel.grid.minor = element_blank()
   )
-
 ```
+
+![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
