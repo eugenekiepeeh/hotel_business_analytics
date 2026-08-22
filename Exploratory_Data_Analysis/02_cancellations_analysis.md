@@ -1,31 +1,17 @@
----
-title: "Analyzing Canceled Bookings"
-author: "Eugene Kiepeeh"
-date: "2026-08-21"
-output: github_document
-editor_options: 
-  chunk_output_type: console
----
+Analyzing Canceled Bookings
+================
+Eugene Kiepeeh
+2026-08-21
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
-library(tidyr)
-library(tidyverse)
-library(dplyr)
-library(ggplot2)
-library(ggridges)
-library(scales)
-library(patchwork)
-```
-
-```{r}
+``` r
 final_hotel_bookings <- read_csv("~/Documents/00 Working Projects/Hotel Data Analytics/Hotel Analytics/Data/Processed_Data/final_hotel_bookings.csv")
 ```
 
------------------
---- Summary Analytics ---
+------------------------------------------------------------------------
 
-```{r}
+— Summary Analytics —
+
+``` r
 sum_cancel <- sum(final_hotel_bookings$is_canceled == 1)
 
 final_hotel_bookings |>
@@ -36,18 +22,36 @@ final_hotel_bookings |>
             mean_ADR = mean(adr, na.rm = T),
             expected_rev = sum(revenue, na.rm = T))
 ```
+
+    ## # A tibble: 4 × 5
+    ##   booking_time_flag numCancels cancelRate mean_ADR expected_rev
+    ##   <chr>                  <int>      <dbl>    <dbl>        <dbl>
+    ## 1 0-7                     1543     0.0642    100.0      385213.
+    ## 2 31-90                   7280     0.303     120.      3310495.
+    ## 3 8-30                    4145     0.173     122.      1767351.
+    ## 4 90+                    11057     0.460     117.      6020984.
+
 - Does room assignment reduce cancellations
-```{r}
+
+``` r
 final_hotel_bookings |>
   filter(is_canceled == 1) |>
   group_by(room_match_flag) |>
   summarise(numCancels = n(), cancelRate = numCancels/24041)
 ```
-- In fact, the room assignment does not affect a client likelihood of cancelling their booking. 
+
+    ## # A tibble: 2 × 3
+    ##   room_match_flag numCancels cancelRate
+    ##   <chr>                <int>      <dbl>
+    ## 1 Room Change            617     0.0257
+    ## 2 Room Match           23408     0.974
+
+- In fact, the room assignment does not affect a client likelihood of
+  cancelling their booking.
 
 # Factors Influencing Revenue and Cancellation
 
-```{r Lead Time Distribution 1}
+``` r
 lead_cancel_df <- final_hotel_bookings |>
   group_by(booking_time_flag) |>
   summarise(bookings = n(),
@@ -61,8 +65,7 @@ lead_cancel_df <- final_hotel_bookings |>
     booking_share = bookings / sum(bookings))
 ```
 
-
-```{r Lead Time Distribution 2}
+``` r
 ggplot(lead_cancel_df,
        aes(x = booking_time_flag)) +
   geom_col(aes(y = booking_share),
@@ -74,7 +77,9 @@ ggplot(lead_cancel_df,
              color = "#D7263D", size = 3) +
   geom_text(aes(y = booking_share,
                 label = percent(booking_share)),
-            vjust = 1.5, color = "white", fontface = "bold") +
+            vjust = 1.5,
+            color = "white",
+            fontface = "bold") +
   scale_y_continuous(
     labels = percent_format(accuracy = 1),
     limits = c(0, max(lead_cancel_df$booking_share,
@@ -89,7 +94,9 @@ ggplot(lead_cancel_df,
     axis.text.x = element_text(face = "bold"))
 ```
 
-```{r}
+![](02_cancellations_analysis_files/figure-gfm/Lead%20Time%20Distribution%202-1.png)<!-- -->
+
+``` r
 loss_df <- final_hotel_bookings |>
   mutate(is_canceled = as.numeric((is_canceled))) |>
   group_by(booking_time_flag) |>
@@ -104,8 +111,7 @@ loss_df <- final_hotel_bookings |>
     loss_share = expected_loss / sum(expected_loss))
 ```
 
-
-```{r}
+``` r
 ggplot(loss_df,
        aes(x = booking_time_flag,
            y = loss_millions,
@@ -130,4 +136,8 @@ ggplot(loss_df,
     axis.text = element_text(face = "bold"),
     panel.grid.minor = element_blank())
 ```
-- Instead of only analyzing cancellation rates, I quantified financial exposure by segment to identify where revenue management intervention would have the highest impact.
+
+![](02_cancellations_analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- --> -
+Instead of only analyzing cancellation rates, I quantified financial
+exposure by segment to identify where revenue management intervention
+would have the highest impact.
