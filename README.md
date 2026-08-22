@@ -54,3 +54,7 @@ Or within RStudio: Open the `.Rmd` files and click "Knit" to render the HTML/PDF
 - What are the lead time segments with the highest revenue loss, and how do they differ from highest-volume segments?
 - How does deposit type interact with market segment to reduce cancellation risk?
 - Which customer type and market segment combination has the worst cancellation exposure?
+
+# Results
+
+![](images/average_daily_rate_trend_plot)
