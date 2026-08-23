@@ -66,3 +66,5 @@ Or within RStudio: Open the `.Rmd` files and click "Knit" to render the HTML/PDF
 ![](images/net_realized_rev_plot)
 
 ![](images/lead_time_cancel_exp_plot)
+
+![](images/exp_rev_byLeadtime_plt)

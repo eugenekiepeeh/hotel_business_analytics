@@ -91,7 +91,7 @@ ggplot(lead_cancel_df,
 
 ```{r}
 loss_df <- final_hotel_bookings |>
-  mutate(is_canceled = as.numeric((is_canceled))) |>
+  #mutate(is_canceled = as.numeric(is_canceled)) |>
   group_by(booking_time_flag) |>
   summarise(
     expected_loss = sum(revenue * is_canceled, na.rm = TRUE),
