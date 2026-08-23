@@ -13,6 +13,11 @@ library(tidyverse)
 ```
 
 ```{r}
+final_hotel_bookings <- read_csv("~/Documents/00 Working Projects/Hotel Data Analytics/Hotel Analytics/Data/Processed_Data/final_hotel_bookings.csv")
+```
+
+
+```{r}
 final_hotel_bookings |> count(hotel)
 final_hotel_bookings |> group_by(hotel) |> 
   summarise(mean_canceled = mean((is_canceled), na.rm = T), 
