@@ -62,3 +62,7 @@ Or within RStudio: Open the `.Rmd` files and click "Knit" to render the HTML/PDF
 ![](images/patched_adr_rev_plot)
 
 ![](images/revenue_exposure_plot)
+
+![](images/net_realized_rev_plot)
+
+![](images/lead_time_cancel_exp_plot)
