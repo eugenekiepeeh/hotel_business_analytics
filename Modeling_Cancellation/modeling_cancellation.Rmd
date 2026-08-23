@@ -24,5 +24,25 @@ cancel_mod <- glm(is_canceled ~ hotel, data = final_hotel_bookings, family = bin
 
 summary(cancel_mod)
 exp(coef(cancel_mod))
+
+cancel_mod2 <- glm(is_canceled ~ lead_time, data = final_hotel_bookings, family = binomial(link = "logit"))
+summary(cancel_mod2)
+exp(coef(cancel_mod2))
+
+cancel_mod3 <- glm(is_canceled ~ booking_time_flag, data = final_hotel_bookings, family = binomial(link = "logit"))
+summary(cancel_mod3)
+exp(coef(cancel_mod3))
+```
+
+
+```{r}
+# Cancellation Probabilities by Booking TIme
+table(final_hotel_bookings$booking_time_flag,
+        as.character(final_hotel_bookings$is_canceled)) |> proportions()
+```
+
+```{r}
+adr_data <- final_hotel_bookings |> filter(adr == 0)
+nights_data <- final_hotel_bookings |> filter(total_nights < 1)
 ```
 

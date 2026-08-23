@@ -147,6 +147,39 @@ recommendations:
 - Tiered cancellation window
 - Incentivize direct booking
 
+```{r}
+final_hotel_bookings |>
+  group_by(customer_type) |>
+  summarize(num = n(),
+            revenue = sum(revenue, na.rm = T),
+            loss = sum(expected_loss, na.rm = T), 
+            Gain = (revenue-loss), .groups = "drop") |>
+    mutate(pct_bookings = num/sum(num),
+         loss_rate = loss/revenue) |>
+  ggplot(aes(x = revenue/1e6,
+             y = loss_rate,
+             size = num,
+             color = loss_rate,
+             label = customer_type)) +
+  geom_point(alpha = 1) +
+  geom_text(vjust = -1.2, size = 3.5) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_continuous(labels = scales::dollar_format(suffix = "M")) +
+  scale_color_gradient(low = "#2E86C1", high = "#C0392B") +
+  scale_size_continuous(range = c(4, 14)) +
+  labs(
+    title = "Revenue vs Revenue Risk by Customer Type",
+    subtitle = "Bubble size represents booking volume",
+    x = "Total Revenue (Millions USD)",
+    y = "Revenue Loss Rate",
+    size = "Total Bookings",
+    color = "Loss Rate") +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right")
+```
+
 ### Deposit
 
 ```{r}
@@ -162,6 +195,15 @@ deposit_segment <- final_hotel_bookings |>
 
 deposit_segment_df <- final_hotel_bookings |>
   group_by(market_segment, deposit_type) |>
+  summarize(
+    revenue = sum(revenue, na.rm = TRUE),
+    loss = sum(expected_loss, na.rm = TRUE),
+    loss_rate = loss / revenue,
+    .groups = "drop") |>
+  filter(market_segment != "Undefined")
+
+deposit_customer_segment_df <- final_hotel_bookings |>
+  group_by(market_segment, customer_type) |>
   summarize(
     revenue = sum(revenue, na.rm = TRUE),
     loss = sum(expected_loss, na.rm = TRUE),
@@ -191,6 +233,18 @@ deposit_segment_df |>
     axis.text.y = element_text(face = "bold"),
     plot.title.position = "plot")
 ```
+
+```{r}
+deposit_customer_segment_df |>
+  ggplot(aes(x = customer_type,
+             y = reorder(market_segment, loss_rate),
+             fill = loss_rate)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "#EBF5FB", high = "#C0392B",
+                      labels = scales::percent_format()) +
+  theme_minimal(base_size = 13)
+```
+
 
 ```{r}
 customer_segment_df <- final_hotel_bookings |>
