@@ -94,6 +94,11 @@ market_segment_df |>
 
 ![](03_customer_segmentation_files/figure-gfm/Revenue%20Lost%20by%20Market%20Segment-1.png)<!-- -->
 
+> Insights: Online Travel Agency contributes 22.26M in expected revenue
+> however, 9.29M is not realized which is ~42% revenue at risk. Although
+> Online TA drives 59% of bookings, it accounts for the highest revenue
+> leakage.
+
 ``` r
 final_hotel_bookings |>
   group_by(market_segment) |>
@@ -128,7 +133,37 @@ final_hotel_bookings |>
     legend.position = "right")
 ```
 
-## ![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+> Insights: In the plot we see for each market segment, we access it’s
+> expected revenue (represented on the x-axis) relative to the
+> percentage of expected revenue loss(represented on the y-axis) and the
+> booking volume of all. due to cancellation In other words, the X-axis
+> represents the revenue importance and Y-axis represent the riskiness
+> associated with each market segment.
+
+Based on this we access how each of the market segment fall into the
+following quadrant and we can design the following strategy:
+
+| Segment Type                  | Strategy                    |
+|-------------------------------|-----------------------------|
+| High revenue + high loss rate | Tighten cancellation policy |
+| High revenue + low loss rate  | Protect & incentivize       |
+| Low revenue + high loss rate  | Reconsider segment          |
+| Low revenue + low loss rate   | Low priority                |
+
+As a result, we can gather from the numbers that **Online TA**
+contribute **51,609 bookings**, **22.2M revenue** and **9.29M lost**.
+
+Which means: ***Nearly half of Online Travel Agency revenue is not
+realized due to cancellations***.
+
+As a means to address this, the management can consider the following
+recommendations:
+
+- Stricter deposit policy
+- Tiered cancellation window
+- Incentivize direct booking
 
 ### Deposit
 
@@ -297,19 +332,16 @@ segment_df <- final_hotel_bookings |>
   filter(market_segment != "Undefined")
 
 
-ggplot(segment_df,
-       aes(x = reorder(market_segment, cancel_rate),
-           y = cancel_rate,
-           fill = customer_type)) +
+ggplot(segment_df, aes(x = reorder(market_segment, cancel_rate), y = cancel_rate, fill = customer_type)) +
   geom_col(position = "dodge") +
   scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = 7) +
   labs(
     title = "Cancellation Rate by Market Segment and Customer Type",
     subtitle = "Online travel agents show elevated cancellation behavior",
     x = "Market Segment",
     y = "Cancellation Rate",
-    fill = "Customer Type"
-  ) +
+    fill = "Customer Type") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
@@ -415,8 +447,7 @@ ggplot(plot_df,
     plot.subtitle = element_text(size = 12),
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "top",
-    panel.grid.minor = element_blank()
-  )
+    panel.grid.minor = element_blank())
 ```
 
 ![](03_customer_segmentation_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->

@@ -55,7 +55,7 @@ final_hotel_bookings |>
 lead_cancel_df <- final_hotel_bookings |>
   group_by(booking_time_flag) |>
   summarise(bookings = n(),
-            cancel_rate = mean(as.numeric(is_canceled))-1,
+            cancel_rate = mean(is_canceled),
             cancelBookings = bookings*cancel_rate,
     .groups = "drop") |>
   mutate(
@@ -66,22 +66,17 @@ lead_cancel_df <- final_hotel_bookings |>
 ```
 
 ``` r
-ggplot(lead_cancel_df,
+ggplot(lead_cancel_df, 
        aes(x = booking_time_flag)) +
-  geom_col(aes(y = booking_share),
-           fill = "#1B998B",
-           width = 0.65, alpha = 1) +
-  geom_line(aes(y = cancel_rate, group = 1),
+  geom_col(aes(y = booking_share), 
+           fill = "#1B998B", width = 0.65, alpha = 1) +
+  geom_line(aes(y = cancel_rate, group = 1), 
             color = "#D7263D", linewidth = 1.2) +
-  geom_point(aes(y = cancel_rate),
+  geom_point(aes(y = cancel_rate), 
              color = "#D7263D", size = 3) +
-  geom_text(aes(y = booking_share,
-                label = percent(booking_share)),
-            vjust = 1.5,
-            color = "white",
-            fontface = "bold") +
-  scale_y_continuous(
-    labels = percent_format(accuracy = 1),
+  geom_text(aes(y = booking_share, label = percent(booking_share)),
+            vjust = 1.5, color = "white", fontface = "bold") +
+  scale_y_continuous(labels = percent_format(accuracy = 1),
     limits = c(0, max(lead_cancel_df$booking_share,
                       lead_cancel_df$cancel_rate-1) * 1.15)) +
   labs(title = "Lead Time Distribution and Cancellation Risk",
@@ -98,16 +93,18 @@ ggplot(lead_cancel_df,
 
 ``` r
 loss_df <- final_hotel_bookings |>
-  mutate(is_canceled = as.numeric((is_canceled))) |>
+  #mutate(is_canceled = as.numeric(is_canceled)) |>
   group_by(booking_time_flag) |>
   summarise(
+    expected_rev = sum(revenue, na.rm = TRUE),
     expected_loss = sum(revenue * is_canceled, na.rm = TRUE),
+    net_realized_rev = expected_rev - expected_loss,
     bookings = n(),
-    .groups = "drop"
-  ) |>
+    .groups = "drop") |>
   mutate(
     booking_time_flag = factor(booking_time_flag, levels = c("0-7","8-30","31-90","90+")),
     loss_millions = expected_loss / 1e6,
+    realized_millions = net_realized_rev/1e6,
     loss_share = expected_loss / sum(expected_loss))
 ```
 
@@ -118,9 +115,7 @@ ggplot(loss_df,
            fill = booking_time_flag)) +
   geom_col(width = 0.65, show.legend = FALSE) +
   geom_text(aes(label = paste0("$", round(loss_millions,1), "M")),
-            vjust = -0.5,
-            fontface = "bold",
-            size = 5) +
+            vjust = -0.5, fontface = "bold", size = 5) +
   scale_y_continuous(labels = dollar_format(suffix = "M"),
     expand = expansion(mult = c(0, 0.12))) +
   scale_fill_manual(values = c("0-7" = "#1B998B", "8-30" = "#2D3047",
@@ -141,3 +136,26 @@ ggplot(loss_df,
 Instead of only analyzing cancellation rates, I quantified financial
 exposure by segment to identify where revenue management intervention
 would have the highest impact.
+
+Let see the net revenue realized by each lead time group
+
+``` r
+ggplot(loss_df, aes(x = booking_time_flag, y = round(realized_millions,0), fill = booking_time_flag)) + 
+  geom_col(width = 0.75, show.legend = FALSE) +
+  geom_text(aes(label = paste0("$", round(realized_millions,1), "M")), vjust = -0.5, size = 5, fontface = "bold") +
+  scale_y_continuous(labels = dollar_format(suffix = "M"), expand = expansion(mult = c(0,0.12))) + 
+  scale_fill_brewer(type = "seq", palette = 5) +
+  #scale_fill_manual(values = colorRampPalette(c("grey", "#1B998B"))(4)) +
+  labs(title = "Net Revenue Realized by Lead Time Segment",
+       subtitle = "Long-Lead Bookings Drive Highest Realized Revenue",
+      x = "Lead Time (Days Before Arrivals)",
+      y = "Net Realized Revenue (USD, Millions)",
+      caption = "Net Realized Revnue = Expected Revenue - Expected Loss") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", size = 18),
+    plot.subtitle = element_text(size = 13),
+    axis.text = element_text(face = "bold"),
+    panel.grid.minor = element_blank())
+```
+
+![](02_cancellations_analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->

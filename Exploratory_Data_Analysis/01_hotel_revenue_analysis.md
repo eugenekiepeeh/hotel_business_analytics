@@ -1,23 +1,9 @@
----
-title: "Analyzing Average Daily Rate"
-author: "Eugene Kiepeeh"
-date: "2026-08-21"
-output: github_document
-editor_options: 
-  chunk_output_type: console
----
+Analyzing Average Daily Rate
+================
+Eugene Kiepeeh
+2026-08-21
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, dpi = 300, fig.width = 7, fig.height = 5)
-library(tidyverse)
-library(dplyr)
-library(ggplot2)
-library(ggridges)
-library(scales)
-library(patchwork)
-```
-
-```{r}
+``` r
 final_hotel_bookings <- read_csv("~/Documents/00 Working Projects/Hotel Data Analytics/Hotel Analytics/Data/Processed_Data/final_hotel_bookings.csv")
 
 theme_business <- function() {
@@ -35,11 +21,14 @@ theme_business <- function() {
 
 Summary Statistics
 
-```{r}
+``` r
 summary(final_hotel_bookings$revenue)
 ```
 
-```{r}
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##   -63.8   152.5   299.0   394.3   503.2  7590.0
+
+``` r
 sum_revenue <- sum(final_hotel_bookings$revenue)
 
 final_hotel_bookings |>
@@ -51,8 +40,14 @@ final_hotel_bookings |>
   mutate(propTotalRevenue = totalRevenue/sum_revenue)
 ```
 
+    ## # A tibble: 3 × 5
+    ##   reservation_status   num totalRevenue AvgADR propTotalRevenue
+    ##   <chr>              <int>        <dbl>  <dbl>            <dbl>
+    ## 1 Canceled           23011    11075873.  119.            0.321 
+    ## 2 Check-Out          63371    22976896.  102.            0.667 
+    ## 3 No-Show             1014      408170.   99.4           0.0118
 
-```{r}
+``` r
 p1 <- final_hotel_bookings |>
   filter(adr < 400) |>
   ggplot(aes(x = adr)) +
@@ -83,7 +78,9 @@ p2 <- final_hotel_bookings |>
 p1 + p2 + plot_layout(nrow = 2)
 ```
 
-```{r Revenue Distribution}
+![](01_hotel_revenue_analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
 final_hotel_bookings |>
   filter(revenue <2000) |>
   ggplot(aes(x = revenue)) +
@@ -96,7 +93,9 @@ final_hotel_bookings |>
        y = "Number of Bookings")
 ```
 
-```{r}
+![](01_hotel_revenue_analysis_files/figure-gfm/Revenue%20Distribution-1.png)<!-- -->
+
+``` r
 summary_data <- final_hotel_bookings |>
   group_by(is_canceled) |>
   summarise(num = n(),
@@ -107,8 +106,7 @@ summary_data <- final_hotel_bookings |>
   mutate(share = totalRevenue / sum(totalRevenue))
 ```
 
-
-```{r, fig.width = 8, fig.height = 6}
+``` r
 summary_data |>
   ggplot(aes(x = is_canceled, y = totalRevenue/1e6, fill = is_canceled)) +
   geom_col(width = 0.65, show.legend = FALSE) +
@@ -134,7 +132,9 @@ summary_data |>
     panel.grid.minor = element_blank())
 ```
 
-```{r duplicate code of revenue exposure}
+![](01_hotel_revenue_analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
 rev_at_risk <- summary_data |>
   filter(is_canceled == "Canceled") |>
   pull(totalRevenue)
@@ -173,7 +173,9 @@ ggplot(summary_data,
     panel.grid.minor = element_blank())
 ```
 
-```{r}
+![](01_hotel_revenue_analysis_files/figure-gfm/duplicate%20code%20of%20revenue%20exposure-1.png)<!-- -->
+
+``` r
 waterfall_df <- summary_data |>
   summarise(
     Total_Expected = sum(totalRevenue),
@@ -189,11 +191,23 @@ waterfall_plot_df <- data.frame(
              waterfall_df$Realized_Revenue))
 
 head(waterfall_df)
+```
+
+    ## # A tibble: 1 × 3
+    ##   Total_Expected Lost_Cancellations Realized_Revenue
+    ##            <dbl>              <dbl>            <dbl>
+    ## 1      34460939.          11484043.        22976896.
+
+``` r
 head(waterfall_plot_df)
 ```
 
+    ##                    Stage    Amount
+    ## 1 Total Expected Revenue  34460939
+    ## 2  Lost to Cancellations -11484043
+    ## 3   Net Realized Revenue  22976896
 
-```{r, fig.width = 8, fig.height = 6}
+``` r
 ggplot(waterfall_plot_df,
        aes(x = Stage, y = Amount, fill = Amount > 0)) +
   geom_col(width = 0.6, show.legend = FALSE) +
@@ -214,3 +228,4 @@ ggplot(waterfall_plot_df,
     panel.grid.minor = element_blank())
 ```
 
+![](01_hotel_revenue_analysis_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->

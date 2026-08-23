@@ -8,7 +8,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, dpi = 300, fig.width = 7, fig.height = 5)
 library(tidyr)
 library(tidyverse)
 library(dplyr)
@@ -51,7 +51,7 @@ final_hotel_bookings |>
 lead_cancel_df <- final_hotel_bookings |>
   group_by(booking_time_flag) |>
   summarise(bookings = n(),
-            cancel_rate = mean(as.numeric(is_canceled))-1,
+            cancel_rate = mean(is_canceled),
             cancelBookings = bookings*cancel_rate,
     .groups = "drop") |>
   mutate(
@@ -62,21 +62,18 @@ lead_cancel_df <- final_hotel_bookings |>
 ```
 
 
-```{r Lead Time Distribution 2}
-ggplot(lead_cancel_df,
+```{r Lead Time Distribution 2, fig.width = 10, fig.height = 6}
+ggplot(lead_cancel_df, 
        aes(x = booking_time_flag)) +
-  geom_col(aes(y = booking_share),
-           fill = "#1B998B",
-           width = 0.65, alpha = 1) +
-  geom_line(aes(y = cancel_rate, group = 1),
+  geom_col(aes(y = booking_share), 
+           fill = "#1B998B", width = 0.65, alpha = 1) +
+  geom_line(aes(y = cancel_rate, group = 1), 
             color = "#D7263D", linewidth = 1.2) +
-  geom_point(aes(y = cancel_rate),
+  geom_point(aes(y = cancel_rate), 
              color = "#D7263D", size = 3) +
-  geom_text(aes(y = booking_share,
-                label = percent(booking_share)),
+  geom_text(aes(y = booking_share, label = percent(booking_share)),
             vjust = 1.5, color = "white", fontface = "bold") +
-  scale_y_continuous(
-    labels = percent_format(accuracy = 1),
+  scale_y_continuous(labels = percent_format(accuracy = 1),
     limits = c(0, max(lead_cancel_df$booking_share,
                       lead_cancel_df$cancel_rate-1) * 1.15)) +
   labs(title = "Lead Time Distribution and Cancellation Risk",
