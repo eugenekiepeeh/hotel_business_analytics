@@ -1,0 +1,28 @@
+---
+title: "Modeling Cancellation Risk"
+author: "Eugene Kiepeeh"
+date: "2026-08-23"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+final_hotel_bookings |> count(hotel)
+final_hotel_bookings |> group_by(hotel) |> 
+  summarise(mean_canceled = mean((is_canceled), na.rm = T), 
+            sd_canceled = sd((is_canceled), na.rm = T), .groups = "drop")
+```
+
+```{r}
+cancel_mod <- glm(is_canceled ~ hotel, data = final_hotel_bookings, family = binomial(link = "logit"))
+
+summary(cancel_mod)
+exp(coef(cancel_mod))
+```
+
