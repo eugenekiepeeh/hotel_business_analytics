@@ -58,3 +58,7 @@ Or within RStudio: Open the `.Rmd` files and click "Knit" to render the HTML/PDF
 # Results
 
 ![](images/average_daily_rate_trend_plot)
+
+![](images/patched_adr_rev_plot)
+
+![](images/revenue_exposure_plot)
