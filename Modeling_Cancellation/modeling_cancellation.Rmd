@@ -2,7 +2,7 @@
 title: "Modeling Cancellation Risk"
 author: "Eugene Kiepeeh"
 date: "2026-08-23"
-output: html_document
+output: github_document
 editor_options: 
   chunk_output_type: console
 ---
