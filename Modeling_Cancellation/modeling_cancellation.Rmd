@@ -47,6 +47,40 @@ table(final_hotel_bookings$booking_time_flag,
 
 ```{r}
 adr_data <- final_hotel_bookings |> filter(adr == 0)
+
+adr_data2 <- adr_data |> filter(!market_segment %in% c("Online TA", "Offline TA/TO"))
+table(adr_data2$market_segment,
+        as.character(adr_data2$is_canceled)) |> proportions(margin = 2)
+
+adr_data2 |> group_by(market_segment) |> summarize(bookings = n(),
+                                                   pct_cancel = mean(is_canceled), .groups = "drop") |> mutate(comp_stay = 1-pct_cancel)
+
+adr_data |> group_by(distribution_channel) |> summarize(bookings = n(),
+                                                   pct_cancel = mean(is_canceled), .groups = "drop") |> mutate(comp_stay = 1-pct_cancel)
+
+adr_data |> group_by(customer_type) |> summarize(bookings = n(),
+                                                   pct_cancel = mean(is_canceled), .groups = "drop") |> mutate(comp_stay = 1-pct_cancel)
+
 nights_data <- final_hotel_bookings |> filter(total_nights < 1)
+
+table(final_hotel_bookings$market_segment, final_hotel_bookings$is_canceled)
+```
+
+
+```{r}
+final_hotel_bookings |> 
+  group_by(market_segment) |>
+  summarize(mean_adr = mean(adr, na.rm =T),
+            sd = sd(adr, na.rm =T),
+            median_adr = median(adr, na.rm = T),
+            min_adr = min(adr, na.rm = T),
+            mean_nights = mean(total_nights, na.rm = T),
+            min_nights = min(total_nights, na.rm = T),
+            bookings = n(),
+            pct_cancel = mean(is_canceled, na.rm = T))
+
+
+# see corporate
+View(final_hotel_bookings |> filter(market_segment == "Corporate"))
 ```
 

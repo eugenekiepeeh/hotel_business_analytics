@@ -149,3 +149,38 @@ ggplot(loss_df, aes(x = booking_time_flag, y = round(realized_millions,0), fill 
     panel.grid.minor = element_blank())
 ```
 
+```{r}
+marketSegment_cancel_df <- final_hotel_bookings |>
+  filter(market_segment != "Undefined") |>
+  group_by(market_segment) |>
+  summarise(bookings = n(),
+            cancel_rate = mean(is_canceled),
+            cancelBookings = bookings*cancel_rate,
+    .groups = "drop") |>
+  mutate(
+    booking_share = bookings / sum(bookings),
+    overall_cancel = cancelBookings/sum(cancelBookings))
+
+distribution_cancel_df <- final_hotel_bookings |>
+  filter(distribution_channel != "Undefined") |>
+  group_by(distribution_channel) |>
+  summarise(bookings = n(),
+            cancel_rate = mean(is_canceled),
+            cancelBookings = bookings*cancel_rate,
+    .groups = "drop") |>
+  mutate(
+    booking_share = bookings / sum(bookings),
+    overall_cancel = cancelBookings/sum(cancelBookings))
+
+customerType_cancel_df <- final_hotel_bookings |>
+  #filter(distribution_channel != "Undefined") |>
+  group_by(customer_type) |>
+  summarise(bookings = n(),
+            cancel_rate = mean(is_canceled),
+            cancelBookings = bookings*cancel_rate,
+    .groups = "drop") |>
+  mutate(
+    booking_share = bookings / sum(bookings),
+    overall_cancel = cancelBookings/sum(cancelBookings))
+```
+
