@@ -8,34 +8,30 @@ The goal of this work is to predict whether a booking will be cancelled (binary 
 
 ## Contents
 
-- `00-data-prep.ipynb` – data loading and cleaning, feature extraction and preprocessing pipelines.
-- `01-exploratory-analysis.ipynb` – EDA, visualisations, and initial feature assessments.
-- `02-modeling.ipynb` – model training (baseline models, hyperparameter tuning), cross-validation and calibration.
-- `03-evaluation-and-interpretation.ipynb` – metrics, confusion matrices, ROC/PR curves, and model interpretation (feature importance, SHAP).
-- `utils/` – helper functions and reusable preprocessing/modeling utilities.
-- `models/` – saved model artifacts and serialized pipelines (created by the training notebooks).
+- `hotel_booking_cancellation_models-logistic_svm.ipynb` – data loading and cleaning, feature extraction, preprocessing pipelines, and model training (baseline models).
+- `hotel_booking_cancellation_models-randForest_XGBoost.ipynb` – model training (baseline models, hyperparameter tuning), cross-validation and calibration including metrics, confusion matrices, ROC/PR curves, and model interpretation (feature importance, SHAP).
 
-(If your filenames differ, update this list to match the actual files in the directory.)
+
 
 ## Data
 
-Expect the raw dataset to be placed in `../data/` or a location configured in the notebooks (e.g. `../data/hotel_bookings.csv`). Notebooks start from the cleaned dataset produced by `00-data-prep.ipynb` unless noted otherwise.
+Expect the raw dataset to be placed in `../Data/` or a location configured in the notebooks (e.g. `../data/hotel_bookings.csv`). Notebooks start from the cleaned dataset produced by `../Data_Cleaning/data_processing.rmd`.
 
 Key assumptions:
 - Target column: `is_canceled` (0 = not cancelled, 1 = cancelled).
-- Typical features: booking lead time, arrival date, number_of_adults/children, market segment, distribution channel, previous cancellations, deposit type, customer type, adr, etc.
+- Typical features: booking lead time, arrival date, number_of_adults/children, market segment, distribution channel, previous cancellations, deposit type, customer type, adr (average daily rate), etc.
 
 ## Modeling approach
 
 - Baseline models: Logistic Regression and Decision Tree.
 - Stronger models: Random Forest, XGBoost/LightGBM.
 - Pipelines: Scikit-learn Pipelines are used to encapsulate preprocessing (imputation, encoding, scaling) and model training so that exported artifacts are reproducible.
-- Imbalanced classes: apply resampling (SMOTE) or class weighting where appropriate; evaluate with precision-recall and ROC AUC.
+- Imbalanced classes: apply resampling and class weighting where appropriate; evaluate with precision-recall and ROC AUC.
 
 ## Preprocessing highlights
 
 - Dates: extract useful features (lead time, day-of-week, month, seasonality).
-- Missing values: impute numerical features with median and categorical with a special category or mode.
+- Missing values: not a challenge that was encountered for this project.
 - Categorical encoding: use One-Hot or Target/Ordinal encoding depending on cardinality.
 - Scaling: numeric features are scaled when required by the model.
 
@@ -75,9 +71,7 @@ You can also run key scripts (if present) in a headless mode for reproduction; a
 
 ## Next steps / Improvements
 
-- Add hyperparameter sweeps using tools such as Optuna or scikit-optimize.
-- Improve temporal validation if bookings are time-dependent (use time-series cross-validation by booking date).
-- Build a lightweight inference service for batch scoring or integrate into a dashboard for monitoring cancellations.
+- Use ARIMA, Prophet, or SARIMA to forecast future booking volume, ADR, and cancellation rates by month/season
 
 ## Contact
 
