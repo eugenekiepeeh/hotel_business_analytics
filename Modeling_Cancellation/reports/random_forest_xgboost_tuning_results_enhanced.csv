@@ -1,0 +1,3 @@
+Model,Best Parameters,Best CV ROC AUC,Test ROC AUC,Precision,Recall,F1
+Random Forest,"{'max_depth': None, 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 350}",0.8101851235716229,0.8104322112567743,0.6061297220242338,0.5921180894025901,0.5990419836573683
+XGBoost,"{'learning_rate': 0.1, 'max_depth': 7, 'n_estimators': 250, 'subsample': 0.8}",0.8066948620452632,0.8077033832937046,0.5412953705716149,0.693635983846261,0.608069340169688
