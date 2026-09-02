@@ -1,0 +1,44 @@
+feature,importance
+deposit_type_Non Refund,0.40701237
+market_segment_Online TA,0.1087418
+total_of_special_requests,0.04558079
+customer_type_Transient-Party,0.029642
+customer_type_Transient,0.02334183
+lead_time,0.02296007
+deposit_type_No Deposit,0.018150179
+hotel_City Hotel,0.01660543
+distribution_channel_TA/TO,0.014760607
+market_segment_Offline TA/TO,0.014404834
+market_segment_Groups,0.014089516
+customer_type_Contract,0.01381671
+distribution_channel_Corporate,0.012807732
+arrival_date_month_July,0.012184111
+adr,0.011712036
+adults,0.01170964
+distribution_channel_Direct,0.011553809
+arrival_date_month_October,0.011386854
+market_segment_Corporate,0.011157021
+customer_type_Group,0.011076652
+arrival_date_week_number,0.011029385
+market_segment_Aviation,0.010917708
+arrival_date_month_December,0.010824017
+arrival_date_month_May,0.01073909
+arrival_date_month_March,0.010680919
+market_segment_Direct,0.010514351
+distribution_channel_GDS,0.0104818195
+arrival_date_month_September,0.010367682
+stays_in_week_nights,0.010216615
+arrival_date_month_August,0.010198312
+arrival_date_month_April,0.010192641
+family_flag_0,0.009981633
+arrival_date_month_November,0.009474329
+stays_in_weekend_nights,0.009150264
+arrival_date_month_February,0.00899706
+arrival_date_month_June,0.008655754
+arrival_date_month_January,0.008614088
+distribution_channel_Undefined,0.0062703434
+hotel_Resort Hotel,0.0
+market_segment_Undefined,0.0
+deposit_type_Refundable,0.0
+market_segment_Complementary,0.0
+family_flag_1,0.0
